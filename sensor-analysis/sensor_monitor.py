@@ -21,6 +21,7 @@ def generate():
         temperature=random.uniform(min_sensor, max_sensor)
         temperature_list.append(temperature)
     print(temperature_list)
+    print(0)
     return temperature_list
 
 def main():
