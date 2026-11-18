@@ -5,22 +5,25 @@ import csv
 from pathlib import Path
 
 def get_user_input():
-    random.seed(1000)
-    sensor_type = str(input("Which type do you want?"))
-    print(sensor_type)
+    try:
+        random.seed(1000)
+        sensor_type = str(input("Which type do you want?"))
+        print(sensor_type)
 
-    num = int(input("How many readings do you want?"))
-    print(num)
+        num = int(input("How many readings do you want?"))
+        if num <= 0:
+            raise ValueError("Please enter a positive number.")
 
-    min_sensor = int(input("what minimum sensor value do you want?"))
-    print(min_sensor)
+        min_sensor = int(input("what minimum sensor value do you want?"))
+        max_sensor = int(input("what maximum sensor value do you want?"))
+        if min_sensor > max_sensor:
+            raise ValueError("Please enter minimum sensor value smaller than maximum sensor value.")
 
-    max_sensor = int(input("what maximum sensor value do you want?"))
-    print(max_sensor)
-
-    alert_threshold = int(input("what alert threshold value do you want?"))
-    print(alert_threshold)
-    return num, min_sensor, max_sensor, alert_threshold
+        alert_threshold = int(input("what alert threshold value do you want?"))
+        print(alert_threshold)
+        return num, min_sensor, max_sensor, alert_threshold
+    except ValueError as error:
+        raise ValueError("Please enter a number instead of a text")
 
 def generate(num, min_sensor, max_sensor):
     temperature_list = []
@@ -106,15 +109,21 @@ def main():
             analyze(temperature, alert_threshold)
             visualize(temperature, alert_threshold)
 
-        except (OSError, ValueError, KeyError) as error:
+        except (OSError) as error:
             print("Could not load the CSV:", error)
-            print("Generating simulated readings instead.")
+        except (ValueError) as error:
+            print("Invalid input:", error)
 
     else:
         temperature_array = generate(num, min_sensor, max_sensor)
         analyze(temperature_array, alert_threshold)
         visualize(temperature_array, alert_threshold)
-        save_readings("Truc.csv", temperature_array)
+        try:
+            save_readings("Truc.csv", temperature_array)
+
+        except(OSError) as error:
+            raise OSError ("Could not save the CSV file.", error)
+        
     
 if __name__ == "__main__":
     main()
