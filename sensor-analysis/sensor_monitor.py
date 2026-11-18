@@ -2,24 +2,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import csv
+from pathlib import Path
 
-random.seed(1000)
-sensor_type = str(input("Which type do you want?"))
-print(sensor_type)
+def get_user_input():
+    random.seed(1000)
+    sensor_type = str(input("Which type do you want?"))
+    print(sensor_type)
 
-num = int(input("How many readings do you want?"))
-print(num)
+    num = int(input("How many readings do you want?"))
+    print(num)
 
-min_sensor = int(input("what minimum sensor value do you want?"))
-print(min_sensor)
+    min_sensor = int(input("what minimum sensor value do you want?"))
+    print(min_sensor)
 
-max_sensor = int(input("what maximum sensor value do you want?"))
-print(max_sensor)
+    max_sensor = int(input("what maximum sensor value do you want?"))
+    print(max_sensor)
 
-alert_threshold = int(input("what alert threshold value do you want?"))
-print(alert_threshold)
+    alert_threshold = int(input("what alert threshold value do you want?"))
+    print(alert_threshold)
+    return num, min_sensor, max_sensor, alert_threshold
 
-def generate():
+def generate(num, min_sensor, max_sensor):
     temperature_list = []
     for i in range(num):
         temperature=random.uniform(min_sensor, max_sensor)
@@ -27,7 +30,7 @@ def generate():
     temperature_array = np.array(temperature_list)
     return temperature_array
 
-def analyze(temperature_array):
+def analyze(temperature_array, alert_threshold):
     print(temperature_array)
     print("Number of elements:",temperature_array.size)
     print("Mean", np.mean(temperature_array))
@@ -40,7 +43,7 @@ def analyze(temperature_array):
     print("Readings above threshold:", high_reading)
     print("Number of high readings:", len(high_reading))
 
-def visualize(temperature_array):
+def visualize(temperature_array, alert_threshold):
     sample_number = np.arange(len(temperature_array))
     threshold = alert_threshold
     plt.plot(
@@ -82,11 +85,36 @@ def save_readings(filename, readings):
         for sample_number, temperature in enumerate(readings, start=1):
             writer.writerow([sample_number, temperature])
 
+def load_temperature_data(filename):
+    temperature = []
+
+    with open(filename, "r", newline = "", encoding = "utf-8") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            temperature.append(float(row["degree Celsius"]))
+    if not temperature:
+        raise ValueError(" The CSV file contains no readings.")
+    return np.array(temperature, dtype = float)
+
 def main():
-    temperature_array = generate()
-    analyze(temperature_array)
-    visualize(temperature_array)
-    save_readings("Truc.csv", temperature_array)
+    csv_path = Path("Truc.csv")
+    num, min_sensor, max_sensor, alert_threshold = get_user_input()
+    if csv_path.exists():
+        try:
+            temperature = load_temperature_data(csv_path)
+            print(f"Loaded {len(temperature)} readings from {csv_path}")
+            analyze(temperature, alert_threshold)
+            visualize(temperature, alert_threshold)
+
+        except (OSError, ValueError, KeyError) as error:
+            print("Could not load the CSV:", error)
+            print("Generating simulated readings instead.")
+
+    else:
+        temperature_array = generate(num, min_sensor, max_sensor)
+        analyze(temperature_array, alert_threshold)
+        visualize(temperature_array, alert_threshold)
+        save_readings("Truc.csv", temperature_array)
     
 if __name__ == "__main__":
     main()
